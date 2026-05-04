@@ -1,0 +1,52 @@
+<script>
+async function searchYouTube(query) {
+  const results = document.getElementById("results");
+  const player = document.getElementById("player");
+  results.innerHTML = "";
+  player.innerHTML = "";
+
+  // YouTube RSS search feed
+  const url = `https://cors.isomorphic-git.org/https://www.youtube.com/feeds/videos.xml?search_query=${encodeURIComponent(query)}`;
+
+  const response = await fetch(url);
+  const text = await response.text();
+
+  // Parse XML
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(text, "text/xml");
+  const entries = xml.getElementsByTagName("entry");
+
+  if (entries.length === 0) {
+    results.innerHTML = "<p>No videos found.</p>";
+    return;
+  }
+
+  // Build thumbnails
+  for (let entry of entries) {
+    const id = entry.getElementsByTagName("yt:videoId")[0].textContent;
+    const title = entry.getElementsByTagName("title")[0].textContent;
+
+    const div = document.createElement("div");
+    div.className = "thumb";
+
+    div.innerHTML = `
+      <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" width="300">
+      <p>${title}</p>
+    `;
+
+    div.onclick = () => {
+      player.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}" allowfullscreen></iframe>`;
+      window.scrollTo(0,0);
+    };
+
+    results.appendChild(div);
+  }
+}
+
+document.getElementById("searchForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  const q = document.getElementById("searchInput").value;
+  searchYouTube(q);
+});
+</script>
+
